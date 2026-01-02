@@ -6,6 +6,7 @@ Provides caching and persistence for error solutions.
 import pandas as pd
 import os
 import logging
+import json
 from datetime import datetime
 from typing import Optional, Dict, List, Any
 from pathlib import Path
@@ -49,11 +50,16 @@ class KnowledgeBase:
             logger.info("Creating new knowledge base file")
             df = pd.DataFrame(columns=[
                 "Timestamp",
+                "Category",  # CPU, Memory, Latency, Zombie, Error
+                "Issue_Type",  # Specific type of issue
+                "Severity",  # critical, high, medium, low
                 "Error_Pattern",
                 "Frequency",
                 "Solution",
                 "Source",
                 "Confidence",
+                "Implementation_Steps",  # JSON string of steps
+                "Recommendations",  # JSON string of recommendations
                 "Last_Updated"
             ])
             try:
@@ -113,7 +119,10 @@ class KnowledgeBase:
             return None
 
     def save_entry(self, error: str, fix: str, source: str, count: int = 1,
-                   confidence: str = "medium") -> bool:
+                   confidence: str = "medium", category: str = "Error",
+                   issue_type: str = "general", severity: str = "medium",
+                   implementation_steps: Optional[List[str]] = None,
+                   recommendations: Optional[List[str]] = None) -> bool:
         """
         Save a new resolution to the spreadsheet or update existing.
 
@@ -123,6 +132,11 @@ class KnowledgeBase:
             source: URL or reference for the solution
             count: Number of occurrences
             confidence: Confidence level (low, medium, high)
+            category: Issue category (CPU, Memory, Latency, Zombie, Error)
+            issue_type: Specific type of issue
+            severity: Severity level (critical, high, medium, low)
+            implementation_steps: List of implementation steps
+            recommendations: List of recommendations
 
         Returns:
             True if successful, False otherwise
@@ -139,6 +153,10 @@ class KnowledgeBase:
 
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+            # Serialize lists to JSON strings
+            steps_json = json.dumps(implementation_steps) if implementation_steps else "[]"
+            recommendations_json = json.dumps(recommendations) if recommendations else "[]"
+
             if not existing.empty:
                 # Update existing entry
                 idx = existing.index[0]
@@ -146,9 +164,14 @@ class KnowledgeBase:
                 new_count = old_count + count
 
                 df.loc[idx, 'Frequency'] = new_count
-                df.loc[idx, 'Solution'] = fix  # Update with latest solution
+                df.loc[idx, 'Category'] = category
+                df.loc[idx, 'Issue_Type'] = issue_type
+                df.loc[idx, 'Severity'] = severity
+                df.loc[idx, 'Solution'] = fix
                 df.loc[idx, 'Source'] = source
                 df.loc[idx, 'Confidence'] = confidence
+                df.loc[idx, 'Implementation_Steps'] = steps_json
+                df.loc[idx, 'Recommendations'] = recommendations_json
                 df.loc[idx, 'Last_Updated'] = timestamp
 
                 logger.info(f"Updated existing entry: {error[:50]}... (count: {old_count} → {new_count})")
@@ -156,11 +179,16 @@ class KnowledgeBase:
                 # Create new entry
                 new_data = {
                     "Timestamp": timestamp,
+                    "Category": category,
+                    "Issue_Type": issue_type,
+                    "Severity": severity,
                     "Error_Pattern": error,
                     "Frequency": count,
                     "Solution": fix,
                     "Source": source,
                     "Confidence": confidence,
+                    "Implementation_Steps": steps_json,
+                    "Recommendations": recommendations_json,
                     "Last_Updated": timestamp
                 }
 

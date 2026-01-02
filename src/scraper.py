@@ -15,12 +15,13 @@ logger = logging.getLogger(__name__)
 
 class SolutionScraper:
     """
-    Intelligent web scraper for finding error solutions.
+    Intelligent web scraper for finding error solutions with detailed implementation steps.
 
     Features:
     - Retry logic with exponential backoff
     - Multiple result aggregation
     - Quality scoring based on source relevance
+    - Detailed step-by-step implementation extraction
     - Fallback handling
     """
 
@@ -40,7 +41,12 @@ class SolutionScraper:
             'docs.python.org',
             'developer.mozilla.org',
             'aws.amazon.com',
-            'cloud.google.com'
+            'cloud.google.com',
+            'docs.aws.amazon.com',
+            'learn.microsoft.com',
+            'redis.io',
+            'mongodb.com',
+            'postgresql.org'
         ]
 
         logger.info("SolutionScraper initialized")
@@ -222,12 +228,70 @@ class SolutionScraper:
         # Combine solutions
         main_solution = solution_parts[0] if solution_parts else "No solution available."
 
+        # Extract detailed implementation steps
+        implementation_steps = self._extract_implementation_steps(solution_parts)
+
         return {
             "solution": main_solution,
             "source": best_result.get('href', 'Unknown Source'),
             "confidence": confidence,
-            "all_sources": all_sources
+            "all_sources": all_sources,
+            "implementation_steps": implementation_steps
         }
+
+    def _extract_implementation_steps(self, solution_texts: List[str]) -> List[str]:
+        """
+        Extract detailed step-by-step implementation instructions from solution text.
+
+        Args:
+            solution_texts: List of solution text snippets
+
+        Returns:
+            List of implementation steps
+        """
+        steps = []
+        combined_text = " ".join(solution_texts)
+
+        # Common step indicators
+        step_indicators = [
+            r'step \d+[:.]\s*(.+?)(?=step \d+|$)',
+            r'\d+\.\s*(.+?)(?=\d+\.|$)',
+            r'first,?\s*(.+?)(?=second|then|next|finally|$)',
+            r'then,?\s*(.+?)(?=then|next|finally|$)',
+            r'next,?\s*(.+?)(?=next|then|finally|$)',
+            r'finally,?\s*(.+?)$'
+        ]
+
+        # Look for numbered steps or sequential instructions
+        import re
+
+        for pattern in step_indicators:
+            matches = re.finditer(pattern, combined_text, re.IGNORECASE | re.DOTALL)
+            for match in matches:
+                step = match.group(1).strip()
+                if step and len(step) > 10 and len(step) < 500:
+                    steps.append(step)
+
+        # If no structured steps found, create generic steps
+        if not steps:
+            steps = [
+                "Review the error message and identify the root cause",
+                "Check the solution documentation linked in the source",
+                "Implement the recommended fix based on the solution description",
+                "Test the fix in a development environment",
+                "Deploy to production after verification"
+            ]
+
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_steps = []
+        for step in steps:
+            step_lower = step.lower()
+            if step_lower not in seen:
+                seen.add(step_lower)
+                unique_steps.append(step)
+
+        return unique_steps[:10]  # Limit to 10 steps
 
     def batch_find_solutions(self, error_messages: List[str]) -> List[Dict[str, Any]]:
         """

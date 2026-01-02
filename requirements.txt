@@ -7,8 +7,21 @@ scikit-learn>=1.3.0
 # Excel Support
 openpyxl>=3.1.0
 
-# Web Scraping
+# Web Scraping & HTTP
 duckduckgo-search>=4.0.0
+requests>=2.31.0
+urllib3>=2.0.0
+
+# Cloud Platform Integrations
+boto3>=1.28.0  # AWS CloudWatch
+botocore>=1.31.0
+
+# Optional: Azure Integration (uncomment if needed)
+# azure-monitor-query>=1.2.0
+# azure-identity>=1.15.0
+
+# Optional: Elasticsearch Integration (uncomment if needed)
+# elasticsearch>=8.0.0
 
 # Development Dependencies
 pytest>=7.4.0
