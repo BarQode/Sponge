@@ -1,0 +1,46 @@
+CRITICAL: ConnectionRefusedError: [Errno 111] Connection refused at 10.0.1.5
+CRITICAL: ConnectionRefusedError: [Errno 111] Connection refused at 10.0.1.6
+CRITICAL: ConnectionRefusedError: [Errno 111] Connection refused at 10.0.1.9
+CRITICAL: ConnectionRefusedError: [Errno 111] Connection refused at 192.168.1.10
+ERROR: ValueError: invalid literal for int() with base 10: 'xyz'
+ERROR: ValueError: invalid literal for int() with base 10: 'abc'
+ERROR: ValueError: invalid literal for int() with base 10: '123abc'
+ERROR: NullPointerException in module AuthService at line 245
+ERROR: NullPointerException in module AuthService at line 247
+WARNING: Database query timeout after 30 seconds on connection pool-5
+WARNING: Database query timeout after 30 seconds on connection pool-8
+INFO: System is running normally
+INFO: User login successful for user_id 12345
+INFO: User login successful for user_id 67890
+ERROR: FileNotFoundException: config.yml not found at /etc/app/
+ERROR: FileNotFoundException: settings.json not found at /opt/config/
+CRITICAL: OutOfMemoryError: Java heap space exceeded at 0x7f8a3c00
+CRITICAL: OutOfMemoryError: Java heap space exceeded at 0x7f8a4d11
+ERROR: ModuleNotFoundError: No module named 'numpy' in /app/main.py:15
+ERROR: ModuleNotFoundError: No module named 'pandas' in /app/utils.py:8
+WARNING: SSL certificate will expire in 7 days for domain example.com
+WARNING: SSL certificate will expire in 7 days for domain test.com
+ERROR: Permission denied when accessing file /var/log/secure.log
+ERROR: Permission denied when accessing file /etc/shadow
+CRITICAL: Disk space critical: 95% used on /dev/sda1
+CRITICAL: Disk space critical: 98% used on /dev/sdb1
+INFO: Backup completed successfully to s3://backup-bucket/2024-01-01/
+INFO: Backup completed successfully to s3://backup-bucket/2024-01-02/
+ERROR: HTTP 500 Internal Server Error at endpoint /api/users
+ERROR: HTTP 500 Internal Server Error at endpoint /api/products
+ERROR: HTTP 404 Not Found at endpoint /api/orders/12345
+ERROR: HTTP 404 Not Found at endpoint /api/orders/67890
+WARNING: High memory usage: 85% on host server-01
+WARNING: High memory usage: 87% on host server-02
+ERROR: Redis connection timeout after 5000ms to 10.0.2.5:6379
+ERROR: Redis connection timeout after 5000ms to 10.0.2.6:6379
+CRITICAL: Failed to authenticate user with token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+CRITICAL: Failed to authenticate user with token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVDJ9
+ERROR: Database deadlock detected on table users at transaction ID 123456
+ERROR: Database deadlock detected on table orders at transaction ID 789012
+INFO: Successfully processed 1000 messages from queue order-queue
+INFO: Successfully processed 1500 messages from queue payment-queue
+WARNING: API rate limit exceeded for IP 192.168.1.100
+WARNING: API rate limit exceeded for IP 192.168.1.101
+ERROR: Failed to send email to user@example.com: SMTP timeout
+ERROR: Failed to send email to admin@example.com: SMTP timeout
