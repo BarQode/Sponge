@@ -1,4 +1,19 @@
-# Sponge SaaS Platform - Complete Deployment Guide
+# Sponge - Complete Deployment Guide
+
+## IMPORTANT NOTE
+
+**Sponge is 100% FREE and OPEN-SOURCE software.**
+
+This deployment guide is for **optional advanced deployment scenarios** using AWS EKS. You can use Sponge completely free by running it locally with:
+
+```bash
+pip install -r requirements.txt
+python main.py
+```
+
+The following guide is only needed if you want to deploy Sponge on production cloud infrastructure.
+
+---
 
 ## Prerequisites
 

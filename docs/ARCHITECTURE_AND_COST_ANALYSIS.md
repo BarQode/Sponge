@@ -1,8 +1,21 @@
-# Sponge SaaS Platform - Complete Architecture & Cost Analysis
+# Sponge - Architecture & Infrastructure Cost Analysis
+
+## IMPORTANT NOTE
+
+**Sponge is a 100% FREE and OPEN-SOURCE tool under the MIT License.**
+
+This document provides architecture and cost analysis for **optional advanced deployment scenarios** only. The pricing and SaaS information below is provided as a reference for organizations who wish to:
+- Self-host Sponge in production environments
+- Deploy on AWS EKS infrastructure
+- Understand infrastructure costs for enterprise deployments
+
+**You can use Sponge completely free by running it locally - no infrastructure costs required!**
+
+---
 
 ## Executive Summary
 
-This document provides the complete architecture, cost analysis, and deployment strategy for transforming Sponge into an enterprise SaaS platform deployed on AWS EKS with full observability, ML capabilities, and multi-tenant support.
+This document provides the complete architecture, cost analysis, and deployment strategy for deploying Sponge on AWS EKS with full observability, ML capabilities, and scalable infrastructure. This is entirely optional - Sponge works perfectly as a local CLI tool.
 
 ---
 

@@ -1,8 +1,18 @@
-# 🎉 SPONGE ENTERPRISE SAAS PLATFORM - COMPLETE
+# 🎉 SPONGE - COMPLETE PLATFORM OVERVIEW
+
+## IMPORTANT NOTE
+
+**Sponge is 100% FREE and OPEN-SOURCE software under the MIT License.**
+
+This document describes the complete technical capabilities of Sponge. All features, ML models, analyzers, and integrations are available for free. The infrastructure and deployment information is provided for organizations who wish to self-host Sponge in production environments.
+
+**No payment, subscription, or SaaS service is required to use Sponge!**
+
+---
 
 ## Executive Summary
 
-**Sponge** has been transformed from a command-line RCA tool into a complete, production-ready, enterprise-grade SaaS platform with:
+**Sponge** is a complete, production-ready, enterprise-grade ML-powered RCA tool with:
 
 ✅ **Full AWS EKS Infrastructure**
 ✅ **Hybrid ML Models** (TensorFlow + PyTorch + Scikit-learn)
@@ -159,9 +169,11 @@
 
 ---
 
-## 💰 Financial Model
+## 💰 Infrastructure Costs (For Self-Hosting Reference Only)
 
-### Infrastructure Costs (Monthly)
+**NOTE: These costs apply ONLY if you choose to deploy Sponge on AWS infrastructure. Local usage is completely free!**
+
+### Infrastructure Costs (Monthly - If Self-Hosting on AWS)
 
 | Resource | Cost |
 |----------|------|
@@ -181,37 +193,20 @@
 
 **Optimized (with Spot + Reserved): $700-800/month**
 
-### Pricing Tiers
+### Usage Tiers (For Open-Source Self-Hosting)
 
-| Tier | Price | Features |
-|------|-------|----------|
-| Free | $0/mo | 100 logs/day, basic detection |
-| Starter | $49/mo | 10K logs/day, 1 integration |
-| Professional | $199/mo | 100K logs/day, 5 integrations |
-| Enterprise | $799/mo | Unlimited, custom models |
+Sponge has **NO pricing tiers or subscriptions**. All features are free and unlimited.
 
-### Revenue Projections
+If you choose to self-host on cloud infrastructure, you only pay for your infrastructure costs (AWS, Azure, GCP, etc.). The software itself is completely free with no licensing fees.
 
-**Year 1:**
-- 100 customers
-- $15K/month revenue
-- $2.5K/month costs
-- **$12.5K/month profit**
+**Recommended Self-Hosting Configurations:**
 
-**Year 2:**
-- 500 customers
-- $75K/month revenue
-- $8K/month costs
-- **$67K/month profit**
-
-**Year 3:**
-- 2,000 customers
-- $300K/month revenue
-- $25K/month costs
-- **$275K/month profit**
-
-**Break-even:** 52 paying customers
-**ROI:** 500% by Year 3
+| Scale | Users | Logs/Day | Infrastructure | Estimated AWS Cost |
+|-------|-------|----------|----------------|-------------------|
+| Small | 1-10 | 1K-10K | Local or single EC2 | $0-50/month |
+| Medium | 10-50 | 10K-100K | Small EKS cluster | $200-500/month |
+| Large | 50-500 | 100K-1M | Full EKS setup | $700-1,500/month |
+| Enterprise | 500+ | 1M+ | Multi-region EKS | $2,000+/month |
 
 ---
 
