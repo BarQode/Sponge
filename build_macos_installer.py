@@ -25,7 +25,7 @@ def build_macos_app():
         '--name', APP_NAME,
         '--windowed',
         '--onefile',
-        '--icon', 'assets/icon.icns',  # You'll need to provide this
+        '--icon', 'assets/icons/icon.icns',
         '--add-data', 'src:src',
         '--add-data', 'data:data',
         '--add-data', 'models:models',
@@ -65,7 +65,7 @@ def create_dmg():
     dmg_cmd = [
         'create-dmg',
         '--volname', f'{APP_NAME} {VERSION}',
-        '--volicon', 'assets/icon.icns',
+        '--volicon', 'assets/icons/icon.icns',
         '--window-pos', '200', '120',
         '--window-size', '800', '400',
         '--icon-size', '100',

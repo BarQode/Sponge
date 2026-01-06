@@ -23,7 +23,7 @@ def build_windows_exe():
         '--name', APP_NAME,
         '--onefile',
         '--console',  # Use --windowed for GUI app
-        '--icon', 'assets/icon.ico',  # You'll need to provide this
+        '--icon', 'assets/icons/icon.ico',
         '--add-data', 'src;src',
         '--add-data', 'data;data',
         '--add-data', 'models;models',

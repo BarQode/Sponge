@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sponge RCA Tool - UI Preview</title>
+    <link rel="stylesheet" href="sponge_theme.css">
+    <style>
+        /* Additional demo styles */
+        .demo-section {
+            margin-bottom: 40px;
+        }
+        .demo-title {
+            color: var(--sponge-orange);
+            border-bottom: 3px solid var(--sponge-orange);
+            padding-bottom: 8px;
+            margin-bottom: 16px;
+        }
+        .component-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+        }
+    </style>
+</head>
+<body class="sponge-background">
+    <!-- Floating Bubbles -->
+    <div class="bubble" style="width: 40px; height: 40px; top: 10%; left: 10%;"></div>
+    <div class="bubble" style="width: 50px; height: 50px; top: 20%; right: 15%; animation-delay: 1s;"></div>
+    <div class="bubble" style="width: 30px; height: 30px; bottom: 15%; left: 20%; animation-delay: 2s;"></div>
+    <div class="bubble" style="width: 45px; height: 45px; bottom: 20%; right: 10%; animation-delay: 1.5s;"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="card text-center mb-lg">
+            <h1 style="color: var(--sponge-orange); margin: 0;">
+                🧽 Sponge RCA Tool
+            </h1>
+            <p style="margin: 8px 0 0 0; color: var(--text-light);">
+                AI-Powered Root Cause Analysis
+            </p>
+        </div>
+
+        <!-- Buttons Demo -->
+        <div class="demo-section">
+            <h2 class="demo-title">Buttons</h2>
+            <div class="flex gap-md">
+                <button class="button">Primary Button</button>
+                <button class="button secondary">Secondary Button</button>
+                <button class="button" disabled style="opacity: 0.5; cursor: not-allowed;">Disabled</button>
+            </div>
+        </div>
+
+        <!-- Cards Demo -->
+        <div class="demo-section">
+            <h2 class="demo-title">Cards with Orange Border</h2>
+            <div class="component-grid">
+                <div class="card">
+                    <h3 style="margin-top: 0; color: var(--sponge-orange);">ML Training</h3>
+                    <p>Train custom models on your monitoring data</p>
+                    <div class="flex gap-sm">
+                        <span class="badge high">Active</span>
+                        <span class="badge medium">3 Models</span>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3 style="margin-top: 0; color: var(--sponge-orange);">Knowledge Base</h3>
+                    <p>Search and filter detected issues</p>
+                    <div class="flex gap-sm">
+                        <span class="badge critical">128 Critical</span>
+                        <span class="badge low">45 Low</span>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3 style="margin-top: 0; color: var(--sponge-orange);">Automation</h3>
+                    <p>Generate workflows and scripts</p>
+                    <div class="flex gap-sm">
+                        <span class="badge high">12 Workflows</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inputs and Dropdowns -->
+        <div class="demo-section">
+            <h2 class="demo-title">Inputs & Dropdowns</h2>
+            <div class="card">
+                <div class="mb-md">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">Search Issues</label>
+                    <input type="text" class="input" placeholder="Enter search keywords...">
+                </div>
+                <div class="mb-md">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">Filter by Severity</label>
+                    <select class="select">
+                        <option>All Severities</option>
+                        <option>Critical</option>
+                        <option>High</option>
+                        <option>Medium</option>
+                        <option>Low</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">Description</label>
+                    <textarea class="textarea" rows="4" placeholder="Enter issue description..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Demo -->
+        <div class="demo-section">
+            <h2 class="demo-title">Data Table</h2>
+            <div class="card" style="padding: 0; overflow: hidden;">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Issue Type</th>
+                            <th>Category</th>
+                            <th>Severity</th>
+                            <th>Frequency</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Memory Leak</td>
+                            <td>Memory</td>
+                            <td><span class="badge critical">Critical</span></td>
+                            <td>45</td>
+                            <td><span class="badge high">Active</span></td>
+                        </tr>
+                        <tr>
+                            <td>High CPU Usage</td>
+                            <td>CPU</td>
+                            <td><span class="badge high">High</span></td>
+                            <td>32</td>
+                            <td><span class="badge high">Active</span></td>
+                        </tr>
+                        <tr>
+                            <td>Zombie Process</td>
+                            <td>Process</td>
+                            <td><span class="badge medium">Medium</span></td>
+                            <td>12</td>
+                            <td><span class="badge medium">Resolved</span></td>
+                        </tr>
+                        <tr>
+                            <td>Network Latency</td>
+                            <td>Network</td>
+                            <td><span class="badge low">Low</span></td>
+                            <td>8</td>
+                            <td><span class="badge low">Monitoring</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="demo-section">
+            <h2 class="demo-title">Progress Indicators</h2>
+            <div class="card">
+                <p style="margin-top: 0;"><strong>Training Progress</strong></p>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 65%;"></div>
+                </div>
+                <p style="margin-bottom: 0; margin-top: 8px; color: var(--text-light);">65% Complete</p>
+
+                <div class="mt-md">
+                    <div class="flex items-center gap-md">
+                        <div class="spinner"></div>
+                        <span>Loading data...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs Demo -->
+        <div class="demo-section">
+            <h2 class="demo-title">Tabs Navigation</h2>
+            <div class="tabs">
+                <div class="tab active">Overview</div>
+                <div class="tab">ML Training</div>
+                <div class="tab">Knowledge Base</div>
+                <div class="tab">Automation</div>
+                <div class="tab">Settings</div>
+            </div>
+            <div class="card">
+                <h3 style="margin-top: 0;">Overview</h3>
+                <p>Welcome to the Sponge RCA Tool dashboard. Select a tab above to get started.</p>
+            </div>
+        </div>
+
+        <!-- Modal Example (hidden by default) -->
+        <div class="demo-section">
+            <h2 class="demo-title">Modal Dialog</h2>
+            <button class="button" onclick="document.getElementById('demo-modal').style.display='flex'">
+                Show Modal
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal (hidden by default) -->
+    <div id="demo-modal" class="modal" style="display: none;" onclick="this.style.display='none'">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2 style="margin: 0; color: var(--sponge-orange);">Confirm Action</h2>
+            </div>
+            <p>Are you sure you want to proceed with this action?</p>
+            <div class="flex gap-md" style="justify-content: flex-end; margin-top: 24px;">
+                <button class="button secondary" onclick="document.getElementById('demo-modal').style.display='none'">
+                    Cancel
+                </button>
+                <button class="button" onclick="alert('Confirmed!'); document.getElementById('demo-modal').style.display='none'">
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div style="height: 100px;"></div>
+</body>
+</html>
