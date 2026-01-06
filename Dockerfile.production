@@ -1,0 +1,68 @@
+# Production Dockerfile for Sponge RCA Tool
+# Multi-stage build for optimized image size
+
+# Stage 1: Build dependencies
+FROM python:3.9-slim as builder
+
+WORKDIR /build
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    make \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --user -r requirements.txt
+
+# Stage 2: Runtime image
+FROM python:3.9-slim
+
+LABEL maintainer="Sponge Project"
+LABEL description="Sponge AI Root Cause Analysis Tool"
+LABEL version="2.0.0"
+
+WORKDIR /app
+
+# Install runtime dependencies only
+RUN apt-get update && apt-get install -y \
+    libgomp1 \
+    procps \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy Python packages from builder
+COPY --from=builder /root/.local /root/.local
+
+# Make sure scripts in .local are usable
+ENV PATH=/root/.local/bin:$PATH
+
+# Copy application code
+COPY src/ ./src/
+COPY main.py .
+COPY requirements.txt .
+
+# Create directories for data and models
+RUN mkdir -p /app/data /app/models /app/workflows /app/exports
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV KB_FILE=/app/data/knowledge_base.xlsx
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import sys; sys.exit(0)"
+
+# Run as non-root user
+RUN useradd -m -u 1000 sponge && \
+    chown -R sponge:sponge /app
+
+USER sponge
+
+# Default command
+ENTRYPOINT ["python", "main.py"]
+CMD ["--help"]

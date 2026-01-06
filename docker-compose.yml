@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  sponge:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+    container_name: sponge-rca
+    volumes:
+      # Mount data directory for persistence
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./workflows:/app/workflows
+      - ./exports:/app/exports
+      # Mount log directory (if analyzing local logs)
+      - /var/log:/var/log:ro
+    environment:
+      - KB_FILE=/app/data/knowledge_base.xlsx
+      - LOG_LEVEL=INFO
+      # Add monitoring platform credentials as needed
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - DATADOG_API_KEY=${DATADOG_API_KEY}
+      - DATADOG_APP_KEY=${DATADOG_APP_KEY}
+    command: ["--mode", "performance", "--integration", "mock"]
+    restart: unless-stopped
+    networks:
+      - sponge-network
+
+  # Optional: Web UI service (for future implementation)
+  # sponge-ui:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   container_name: sponge-ui
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - sponge
+  #   networks:
+  #     - sponge-network
+
+networks:
+  sponge-network:
+    driver: bridge
+
+volumes:
+  sponge-data:
+    driver: local
