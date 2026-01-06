@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sponge-config
+  namespace: sponge-prod
+data:
+  ENVIRONMENT: "production"
+  LOG_LEVEL: "INFO"
+  POSTGRES_DB: "sponge"
+  REDIS_HOST: "sponge-redis"
+  REDIS_PORT: "6379"
+  API_BASE_URL: "https://api.5ponge.com"
+  FRONTEND_URL: "https://www.5ponge.com"
+  # CloudWatch configuration
+  AWS_REGION: "us-east-1"
+  # Stripe configuration
+  STRIPE_WEBHOOK_SECRET: "whsec_xxx" # From Secrets Manager
+  # Auth0 configuration
+  AUTH0_DOMAIN: "sponge.auth0.com"
+  AUTH0_AUDIENCE: "https://api.5ponge.com"

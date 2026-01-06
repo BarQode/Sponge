@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sponge-prod
+  labels:
+    name: sponge-prod
+    environment: production
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: sponge-quota
+  namespace: sponge-prod
+spec:
+  hard:
+    requests.cpu: "20"
+    requests.memory: 40Gi
+    limits.cpu: "40"
+    limits.memory: 80Gi
+    persistentvolumeclaims: "10"

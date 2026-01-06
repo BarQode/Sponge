@@ -1,0 +1,150 @@
+{
+  "name": "Sponge Official Theme",
+  "version": "2.0.0",
+  "description": "Official Sponge RCA Tool theme with orange accents and sponge texture",
+
+  "colors": {
+    "primary": {
+      "main": "#FF9500",
+      "light": "#FFB84D",
+      "dark": "#CC7700",
+      "contrast": "#FFFFFF"
+    },
+    "secondary": {
+      "main": "#C8D946",
+      "light": "#E8F966",
+      "dark": "#88A906",
+      "contrast": "#333333"
+    },
+    "background": {
+      "default": "#E8E8E8",
+      "paper": "#FFFFFF",
+      "sponge": "#D0D0D0"
+    },
+    "text": {
+      "primary": "#333333",
+      "secondary": "#666666",
+      "disabled": "#999999",
+      "white": "#FFFFFF"
+    },
+    "severity": {
+      "critical": "#FF3B30",
+      "high": "#FF9500",
+      "medium": "#E8F966",
+      "low": "#C8D946"
+    },
+    "status": {
+      "success": "#34C759",
+      "warning": "#FF9500",
+      "error": "#FF3B30",
+      "info": "#007AFF"
+    },
+    "bubble": {
+      "fill": "rgba(255, 255, 255, 0.6)",
+      "stroke": "rgba(255, 255, 255, 0.8)"
+    }
+  },
+
+  "typography": {
+    "fontFamily": "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+    "fontSize": {
+      "xs": "12px",
+      "sm": "14px",
+      "md": "16px",
+      "lg": "18px",
+      "xl": "24px",
+      "xxl": "32px"
+    },
+    "fontWeight": {
+      "normal": 400,
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700
+    }
+  },
+
+  "spacing": {
+    "xs": "4px",
+    "sm": "8px",
+    "md": "16px",
+    "lg": "24px",
+    "xl": "32px",
+    "xxl": "48px"
+  },
+
+  "borderRadius": {
+    "sm": "4px",
+    "md": "8px",
+    "lg": "16px",
+    "xl": "24px",
+    "round": "50%"
+  },
+
+  "shadows": {
+    "sm": "0 2px 4px rgba(0, 0, 0, 0.1)",
+    "md": "0 4px 8px rgba(0, 0, 0, 0.1)",
+    "lg": "0 8px 16px rgba(0, 0, 0, 0.15)",
+    "xl": "0 12px 24px rgba(0, 0, 0, 0.2)"
+  },
+
+  "animations": {
+    "duration": {
+      "fast": "150ms",
+      "normal": "300ms",
+      "slow": "500ms"
+    },
+    "easing": {
+      "default": "ease",
+      "in": "ease-in",
+      "out": "ease-out",
+      "inOut": "ease-in-out"
+    }
+  },
+
+  "spongeTexture": {
+    "enabled": true,
+    "holeSize": "2-3px",
+    "density": "medium",
+    "color": "#D0D0D0",
+    "pattern": "radial-gradient"
+  },
+
+  "bubbles": {
+    "enabled": true,
+    "count": 5,
+    "sizes": [14, 16, 18, 20, 22],
+    "animation": "float-bubble",
+    "duration": "3s",
+    "opacity": 0.7
+  },
+
+  "components": {
+    "button": {
+      "borderWidth": "2px",
+      "borderStyle": "solid",
+      "padding": "8px 24px",
+      "hoverTransform": "translateY(-2px)"
+    },
+    "card": {
+      "borderWidth": "3px",
+      "borderColor": "#FF9500",
+      "padding": "24px",
+      "shadow": "md"
+    },
+    "input": {
+      "borderWidth": "2px",
+      "borderColor": "#FF9500",
+      "focusShadow": "0 0 0 3px rgba(255, 149, 0, 0.2)"
+    },
+    "modal": {
+      "borderWidth": "4px",
+      "overlay": "rgba(0, 0, 0, 0.5)",
+      "maxWidth": "600px"
+    },
+    "table": {
+      "headerBackground": "#FF9500",
+      "headerColor": "#FFFFFF",
+      "hoverBackground": "rgba(255, 149, 0, 0.1)"
+    }
+  }
+}

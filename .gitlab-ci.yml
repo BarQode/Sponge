@@ -1,0 +1,131 @@
+variables:
+  AWS_DEFAULT_REGION: us-east-1
+  EKS_CLUSTER_NAME: sponge-prod
+  ECR_REGISTRY: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+
+stages:
+  - test
+  - build
+  - deploy
+
+# Test Stage
+test:backend:
+  stage: test
+  image: python:3.11
+  before_script:
+    - pip install -r requirements.txt
+    - pip install pytest pytest-cov
+  script:
+    - pytest tests/ -v --cov=src --cov-report=xml
+    - python -m flake8 src/
+  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+
+test:ml-models:
+  stage: test
+  image: python:3.11
+  before_script:
+    - pip install -r requirements.txt
+    - pip install torch torchvision
+  script:
+    - python -m pytest backend/models/test_*.py -v
+
+# Build Stage
+build:backend:
+  stage: build
+  image: docker:24
+  services:
+    - docker:24-dind
+  before_script:
+    - apk add --no-cache python3 py3-pip
+    - pip3 install awscli
+    - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+  script:
+    - cd backend
+    - docker build -t $ECR_REGISTRY/sponge-backend:$CI_COMMIT_SHA .
+    - docker tag $ECR_REGISTRY/sponge-backend:$CI_COMMIT_SHA $ECR_REGISTRY/sponge-backend:latest
+    - docker push $ECR_REGISTRY/sponge-backend:$CI_COMMIT_SHA
+    - docker push $ECR_REGISTRY/sponge-backend:latest
+  only:
+    - main
+    - develop
+
+build:ml-worker:
+  stage: build
+  image: docker:24
+  services:
+    - docker:24-dind
+  before_script:
+    - apk add --no-cache python3 py3-pip
+    - pip3 install awscli
+    - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+  script:
+    - cd backend/models
+    - docker build -t $ECR_REGISTRY/sponge-ml-worker:$CI_COMMIT_SHA .
+    - docker tag $ECR_REGISTRY/sponge-ml-worker:$CI_COMMIT_SHA $ECR_REGISTRY/sponge-ml-worker:latest
+    - docker push $ECR_REGISTRY/sponge-ml-worker:$CI_COMMIT_SHA
+    - docker push $ECR_REGISTRY/sponge-ml-worker:latest
+  only:
+    - main
+    - develop
+
+# Deploy Stage
+deploy:production:
+  stage: deploy
+  image:
+    name: alpine/k8s:1.28.0
+    entrypoint: [""]
+  before_script:
+    - apk add --no-cache python3 py3-pip
+    - pip3 install awscli
+    - aws eks update-kubeconfig --region $AWS_DEFAULT_REGION --name $EKS_CLUSTER_NAME
+  script:
+    # Update image tags
+    - sed -i "s|:latest|:$CI_COMMIT_SHA|g" kubernetes/03-backend-deployment.yaml
+    - sed -i "s|:latest|:$CI_COMMIT_SHA|g" kubernetes/04-ml-worker-deployment.yaml
+
+    # Apply manifests
+    - kubectl apply -f kubernetes/00-namespace.yaml
+    - kubectl apply -f kubernetes/01-configmap.yaml
+    - kubectl apply -f kubernetes/02-secrets.yaml
+    - kubectl apply -f kubernetes/03-backend-deployment.yaml
+    - kubectl apply -f kubernetes/04-ml-worker-deployment.yaml
+    - kubectl apply -f kubernetes/05-ingress.yaml
+
+    # Wait for rollout
+    - kubectl rollout status deployment/sponge-backend -n sponge-prod --timeout=10m
+    - kubectl rollout status deployment/sponge-ml-worker -n sponge-prod --timeout=10m
+
+    # Verify deployment
+    - kubectl get pods -n sponge-prod
+  environment:
+    name: production
+    url: https://api.5ponge.com
+  only:
+    - main
+  when: manual
+
+deploy:staging:
+  stage: deploy
+  image:
+    name: alpine/k8s:1.28.0
+    entrypoint: [""]
+  before_script:
+    - apk add --no-cache python3 py3-pip
+    - pip3 install awscli
+    - aws eks update-kubeconfig --region $AWS_DEFAULT_REGION --name sponge-staging
+  script:
+    - sed -i "s|:latest|:$CI_COMMIT_SHA|g" kubernetes/03-backend-deployment.yaml
+    - kubectl apply -f kubernetes/ -n sponge-staging
+    - kubectl rollout status deployment/sponge-backend -n sponge-staging --timeout=10m
+  environment:
+    name: staging
+    url: https://staging-api.5ponge.com
+  only:
+    - develop

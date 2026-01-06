@@ -1,0 +1,118 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sponge-backend
+  namespace: sponge-prod
+  labels:
+    app: sponge
+    component: backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: sponge
+      component: backend
+  template:
+    metadata:
+      labels:
+        app: sponge
+        component: backend
+    spec:
+      serviceAccountName: sponge-sa
+      containers:
+      - name: backend
+        image: ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/sponge-backend:latest
+        ports:
+        - containerPort: 8000
+          name: http
+        envFrom:
+        - configMapRef:
+            name: sponge-config
+        env:
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sponge-db-secret
+              key: password
+        - name: STRIPE_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: sponge-stripe-secret
+              key: secret_key
+        - name: AUTH0_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: sponge-auth0-secret
+              key: client_secret
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        volumeMounts:
+        - name: secrets-store
+          mountPath: "/mnt/secrets-store"
+          readOnly: true
+      volumes:
+      - name: secrets-store
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: "sponge-aws-secrets"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sponge-backend
+  namespace: sponge-prod
+spec:
+  type: ClusterIP
+  selector:
+    app: sponge
+    component: backend
+  ports:
+  - port: 80
+    targetPort: 8000
+    protocol: TCP
+    name: http
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: sponge-backend-hpa
+  namespace: sponge-prod
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: sponge-backend
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
