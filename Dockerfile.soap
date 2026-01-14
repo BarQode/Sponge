@@ -1,0 +1,123 @@
+# Multi-stage Dockerfile for Sponge SOAP API Server
+# Optimized for minimal size with all dependencies
+
+# ====================================
+# Stage 1: Builder - Compile dependencies
+# ====================================
+FROM python:3.9-slim as builder
+
+LABEL stage=builder
+
+WORKDIR /build
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
+    make \
+    libgomp1 \
+    libffi-dev \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements.txt .
+
+# Create additional requirements for SOAP
+RUN echo "spyne>=2.14.0" >> requirements.txt && \
+    echo "lxml>=4.9.0" >> requirements.txt && \
+    echo "docker>=6.0.0" >> requirements.txt && \
+    echo "certbot>=2.0.0" >> requirements.txt && \
+    echo "PyYAML>=6.0.0" >> requirements.txt
+
+# Install dependencies into /install directory
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+
+# ====================================
+# Stage 2: Runtime - Lightweight production image
+# ====================================
+FROM python:3.9-slim
+
+LABEL maintainer="Sponge Project" \
+      description="Sponge SOAP API Server for Auto-Remediation" \
+      version="2.0.0"
+
+WORKDIR /app
+
+# Install runtime dependencies only
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \
+    procps \
+    net-tools \
+    curl \
+    ansible \
+    docker.io \
+    certbot \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy Python packages from builder
+COPY --from=builder /install /usr/local
+
+# Create non-root user
+RUN useradd -m -u 1000 sponge && \
+    mkdir -p /app/data /app/models /app/workflows /app/exports \
+              /app/ansible_playbooks /etc/sponge/certs /etc/sponge/policies && \
+    chown -R sponge:sponge /app /etc/sponge
+
+# Copy application code
+COPY --chown=sponge:sponge src/ ./src/
+COPY --chown=sponge:sponge main.py .
+COPY --chown=sponge:sponge requirements.txt .
+
+# Copy SOAP server startup script
+COPY --chown=sponge:sponge <<EOF /app/start_soap_server.py
+#!/usr/bin/env python3
+"""
+SOAP Server Startup Script
+"""
+
+import logging
+import sys
+from src.soap_integration import run_soap_server
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+logger = logging.getLogger(__name__)
+
+if __name__ == '__main__':
+    logger.info("Starting Sponge SOAP API Server...")
+
+    try:
+        # Run SOAP server
+        run_soap_server(host='0.0.0.0', port=8001)
+    except KeyboardInterrupt:
+        logger.info("Shutting down...")
+        sys.exit(0)
+    except Exception as e:
+        logger.error(f"Failed to start SOAP server: {e}")
+        sys.exit(1)
+EOF
+
+RUN chmod +x /app/start_soap_server.py
+
+# Switch to non-root user
+USER sponge
+
+# Environment variables
+ENV PYTHONUNBUFFERED=1 \
+    KB_FILE=/app/data/knowledge_base.xlsx \
+    ANSIBLE_HOST_KEY_CHECKING=False \
+    DOCKER_HOST=unix:///var/run/docker.sock
+
+# Expose SOAP API port
+EXPOSE 8001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8001/?wsdl || exit 1
+
+# Run SOAP server
+ENTRYPOINT ["python3", "/app/start_soap_server.py"]

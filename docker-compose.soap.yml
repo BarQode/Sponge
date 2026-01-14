@@ -1,0 +1,114 @@
+version: '3.8'
+
+services:
+  # SOAP API Server
+  sponge-soap:
+    build:
+      context: .
+      dockerfile: Dockerfile.soap
+    container_name: sponge-soap-api
+    ports:
+      - "8001:8001"  # SOAP API
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./workflows:/app/workflows
+      - ./ansible_playbooks:/app/ansible_playbooks
+      - /var/run/docker.sock:/var/run/docker.sock  # Docker access
+    environment:
+      - KB_FILE=/app/data/knowledge_base.xlsx
+      - LOG_LEVEL=INFO
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    networks:
+      - sponge-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/?wsdl"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Container Monitor (monitors other containers)
+  sponge-monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile.complete
+    container_name: sponge-monitor
+    environment:
+      - SPONGE_MODE=monitor
+      - CPU_THRESHOLD=80
+      - MEMORY_THRESHOLD=85
+      - AUTO_RESTART=true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data:/app/data
+    restart: unless-stopped
+    networks:
+      - sponge-network
+    depends_on:
+      - sponge-soap
+
+  # ML Training Worker (optional)
+  sponge-ml:
+    build:
+      context: .
+      dockerfile: Dockerfile.complete
+    container_name: sponge-ml-worker
+    environment:
+      - SPONGE_MODE=ml-training
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+    restart: "no"  # Run on-demand
+    networks:
+      - sponge-network
+    profiles:
+      - ml-training  # Only start with --profile ml-training
+
+  # Certificate Renewal Service
+  sponge-certbot:
+    build:
+      context: .
+      dockerfile: Dockerfile.complete
+    container_name: sponge-certbot
+    command: ["python3", "-m", "src.soap_integration.certificate_manager"]
+    volumes:
+      - ./certs:/etc/sponge/certs
+      - ./policies:/etc/sponge/policies
+    restart: unless-stopped
+    networks:
+      - sponge-network
+    depends_on:
+      - sponge-soap
+
+  # Vulnerability Scanner (periodic scanning)
+  sponge-scanner:
+    build:
+      context: .
+      dockerfile: Dockerfile.complete
+    container_name: sponge-scanner
+    command: ["python3", "-m", "src.soap_integration.vulnerability_scanner"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data:/app/data
+    restart: unless-stopped
+    networks:
+      - sponge-network
+    depends_on:
+      - sponge-soap
+
+networks:
+  sponge-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  sponge-data:
+    driver: local
+  sponge-models:
+    driver: local
+  sponge-certs:
+    driver: local
