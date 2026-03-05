@@ -20,7 +20,7 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 
 # Core imports
-from src.ml_engine import LogRCAEngine
+from src.ml_engine import HybridMLEngine, LogRCAEngine  # LogRCAEngine for backward compat
 from src.scraper import SolutionScraper
 from src.storage import KnowledgeBase
 from src.config import LOGGING_CONFIG, LOG_SOURCE, LOG_FILE_PATH
@@ -238,8 +238,14 @@ def analyze_performance(args, kb: KnowledgeBase):
 
         print(f"\n🔴 {category} Issue: {description}")
 
-        # Get detailed solution
-        solution = scraper.find_solution(description)
+        # Get detailed solution with ML enhancement
+        solution = scraper.find_solution(description, severity)
+
+        # Get ML recommendation
+        ml_rec = solution.get('ml_recommendation', {})
+        if ml_rec:
+            print(f"   🤖 ML Recommendation: {ml_rec.get('recommended_fix', 'N/A')} "
+                  f"({ml_rec.get('confidence', 0):.1%})")
 
         # Save to knowledge base
         kb.save_entry(
@@ -268,15 +274,15 @@ def analyze_performance(args, kb: KnowledgeBase):
 
 
 def analyze_errors(args, kb: KnowledgeBase):
-    """Run error pattern analysis (original functionality)."""
-    print("\n🔍 Error Pattern Analysis Mode")
+    """Run error pattern analysis with ML-powered fix recommendations."""
+    print("\n🔍 Error Pattern Analysis Mode (ML-Enhanced)")
     print_separator()
 
     # Initialize components
-    print("[1/5] Initializing ML Engine...")
-    engine = LogRCAEngine()
+    print("[1/5] Initializing Hybrid ML Engine (Random Forest + Linear Regression)...")
+    engine = HybridMLEngine()
 
-    print("[2/5] Initializing Web Scraper...")
+    print("[2/5] Initializing Web Scraper with ML Integration...")
     scraper = SolutionScraper()
 
     # Fetch logs
@@ -297,11 +303,15 @@ def analyze_errors(args, kb: KnowledgeBase):
 
     print(f"   ✓ Ingested {len(logs)} log entries")
 
-    # Analyze (RCA)
-    print("[4/5] Running TensorFlow Root Cause Analysis...")
+    # Analyze (RCA) with new ML pipeline
+    print("[4/5] Running ML Root Cause Analysis...")
+    print("   → DBSCAN clustering for pattern identification")
+    print("   → Random Forest for fix recommendation")
+    print("   → Linear Regression for frequency prediction")
 
     try:
-        root_causes = engine.analyze_root_causes(logs)
+        # Use the new analyze_root_causes which returns RCAResult objects
+        root_causes = engine.analyze_root_causes(logs, severity="high")
     except Exception as e:
         logger.error(f"Analysis failed: {e}", exc_info=True)
         print(f"❌ Analysis failed: {e}")
@@ -315,70 +325,111 @@ def analyze_errors(args, kb: KnowledgeBase):
     print(f"   ✓ Identified {len(root_causes)} unique error patterns")
 
     # Resolve and Save
-    print(f"[5/5] Finding solutions and updating knowledge base...")
+    print(f"[5/5] Processing ML predictions and updating knowledge base...")
     print_separator()
 
-    for i, rc in enumerate(root_causes, 1):
-        error_pattern = rc['representative_log']
-        count = rc['count']
+    for i, rca_result in enumerate(root_causes, 1):
+        error_pattern = rca_result.pattern
+        count = rca_result.frequency
+        ml_fix = rca_result.recommended_fix
+        ml_confidence = rca_result.fix_confidence
+        category = rca_result.category
+        severity = rca_result.severity
+        predicted_count = rca_result.predicted_count_next_hour
+        freq_alert = rca_result.frequency_alert
 
         print(f"\n🔴 Error Pattern #{i} (Occurrences: {count})")
         print(f"   Pattern: {error_pattern}")
+        print(f"   Category: {category.upper()} | Severity: {severity.upper()}")
+
+        # ML Prediction
+        print(f"\n   🤖 ML Fix Recommendation:")
+        print(f"      → Action: {ml_fix}")
+        print(f"      → Confidence: {ml_confidence:.1%}")
+        print(f"      → Source: {rca_result.source}")
+
+        # Show alternatives
+        if rca_result.fix_alternatives and len(rca_result.fix_alternatives) > 1:
+            print(f"      → Alternatives:")
+            for alt in rca_result.fix_alternatives[1:3]:  # Show top 2 alternatives
+                print(f"         • {alt['action']} ({alt['probability']:.1%})")
+
+        # Frequency prediction
+        if predicted_count > 0:
+            print(f"\n   📈 Frequency Prediction:")
+            print(f"      → Predicted next hour: {predicted_count:.1f} occurrences")
+
+        # Frequency alert
+        if freq_alert:
+            alert_emoji = "🚨" if freq_alert.alert_level == "critical" else "⚠️"
+            print(f"\n   {alert_emoji} Frequency Alert: {freq_alert.alert_level.upper()}")
+            print(f"      → Threshold: {freq_alert.threshold:.1f} (coefficient: {freq_alert.coefficient}x)")
+            print(f"      → Predicted: {freq_alert.predicted_count:.1f}")
 
         # Check cache first
         resolution = kb.check_cache(error_pattern)
 
         if resolution:
-            print(f"   💾 [Cache Hit] Found existing solution")
-            print(f"      Confidence: {resolution.get('confidence', 'unknown')}")
+            print(f"\n   💾 [Cache Hit] Found existing solution")
+            print(f"      Web Confidence: {resolution.get('confidence', 'unknown')}")
         else:
-            print(f"   🌐 [Cache Miss] Searching web for solution...")
+            print(f"\n   🌐 [Cache Miss] Searching web for additional context...")
 
             try:
-                resolution = scraper.find_solution(error_pattern)
-                # Save to knowledge base with implementation steps
+                # Get web solution with ML enhancement
+                resolution = scraper.find_solution(error_pattern, severity)
+
+                # Get ML recommendation from scraper result
+                ml_rec = resolution.get('ml_recommendation', {})
+
+                # Save to knowledge base with ML data
                 kb.save_entry(
                     error_pattern,
                     resolution['solution'],
                     resolution['source'],
                     count,
                     resolution.get('confidence', 'medium'),
-                    category='Error',
-                    issue_type='error_pattern',
-                    severity='high',
-                    implementation_steps=resolution.get('implementation_steps', []),
-                    recommendations=[]
+                    category=category,
+                    issue_type='ml_detected',
+                    severity=severity,
+                    implementation_steps=rca_result.implementation_steps,
+                    recommendations=[f"ML Fix: {ml_fix} ({ml_confidence:.1%})"]
                 )
-                print(f"      Confidence: {resolution.get('confidence', 'unknown')}")
+                print(f"      Web Confidence: {resolution.get('confidence', 'unknown')}")
             except Exception as e:
                 logger.error(f"Error during web scraping: {e}")
                 resolution = {
-                    "solution": f"Error retrieving solution: {e}",
+                    "solution": f"Error retrieving web solution: {e}",
                     "source": "Error",
                     "confidence": "low"
                 }
 
-        # Display solution
-        solution_text = resolution['solution']
+        # Display web solution
+        solution_text = resolution.get('solution', 'No solution available')
         if len(solution_text) > 200:
             solution_text = solution_text[:200] + "..."
 
-        print(f"   💡 Solution: {solution_text}")
-        print(f"   🔗 Source: {resolution['source']}")
+        print(f"\n   💡 Web Solution: {solution_text}")
+        print(f"   🔗 Source: {resolution.get('source', 'N/A')}")
 
-        # Display implementation steps if available
-        steps = resolution.get('implementation_steps', [])
-        if steps:
-            print(f"   📋 Implementation Steps ({len(steps)}):")
-            for idx, step in enumerate(steps[:3], 1):  # Show first 3
-                print(f"      {idx}. {step[:80]}...")
+        # Display ML implementation steps
+        if rca_result.implementation_steps:
+            print(f"\n   📋 ML Implementation Steps ({len(rca_result.implementation_steps)}):")
+            for idx, step in enumerate(rca_result.implementation_steps[:4], 1):  # Show first 4
+                # Truncate long steps
+                step_text = step if len(step) <= 80 else step[:77] + "..."
+                print(f"      {idx}. {step_text}")
+            if len(rca_result.implementation_steps) > 4:
+                print(f"      ... and {len(rca_result.implementation_steps) - 4} more steps")
 
     # Summary
     print_separator()
-    print("\n✅ Analysis Complete!")
+    print("\n✅ ML-Enhanced Analysis Complete!")
     print(f"   📁 Results saved to: {kb.filename}")
     print(f"   📊 Processed {len(logs)} logs")
     print(f"   🎯 Found {len(root_causes)} error patterns")
+    print(f"   🤖 ML predictions generated for all patterns")
+    print(f"   📈 Frequency predictions available")
     print_separator()
 
     return 0
