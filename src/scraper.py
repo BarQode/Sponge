@@ -1,6 +1,7 @@
 """
 Web scraper for finding solutions to error patterns.
 Intelligently searches the web and aggregates solutions from multiple sources.
+Integrates with ML-based fix prediction for production-ready bug resolution.
 """
 
 import logging
@@ -8,6 +9,7 @@ import time
 from typing import Dict, List, Any, Optional
 from duckduckgo_search import DDGS
 from src.config import SCRAPER_CONFIG
+from src.ml_engine import HybridMLEngine, clean_log
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -18,6 +20,7 @@ class SolutionScraper:
     Intelligent web scraper for finding error solutions with detailed implementation steps.
 
     Features:
+    - ML-based fix prediction using Random Forest
     - Retry logic with exponential backoff
     - Multiple result aggregation
     - Quality scoring based on source relevance
@@ -26,11 +29,14 @@ class SolutionScraper:
     """
 
     def __init__(self):
-        """Initialize the solution scraper with configuration."""
+        """Initialize the solution scraper with configuration and ML engine."""
         self.max_retries = SCRAPER_CONFIG["max_retries"]
         self.retry_delay = SCRAPER_CONFIG["retry_delay"]
         self.max_results = SCRAPER_CONFIG["max_results"]
         self.timeout = SCRAPER_CONFIG["timeout"]
+
+        # Initialize ML engine for fix prediction
+        self.ml_engine = HybridMLEngine()
 
         # Trusted sources for technical solutions (for scoring)
         self.trusted_sources = [
@@ -49,7 +55,7 @@ class SolutionScraper:
             'postgresql.org'
         ]
 
-        logger.info("SolutionScraper initialized")
+        logger.info("SolutionScraper initialized with ML engine")
 
     def _score_result(self, result: Dict[str, str]) -> int:
         """
@@ -84,15 +90,17 @@ class SolutionScraper:
 
         return score
 
-    def find_solution(self, error_message: str) -> Dict[str, Any]:
+    def find_solution(self, error_message: str, severity: str = "medium") -> Dict[str, Any]:
         """
         Searches the web for a solution to the specific error message.
+        Combines ML-based fix prediction with web search results.
 
         Args:
             error_message: The error pattern to search for
+            severity: Severity level of the error (critical, high, medium, low, info)
 
         Returns:
-            Dictionary with 'solution', 'source', and 'confidence' keys
+            Dictionary with 'solution', 'source', 'confidence', and 'ml_recommendation' keys
         """
         if not error_message or not error_message.strip():
             logger.warning("Empty error message provided to scraper")
@@ -100,8 +108,12 @@ class SolutionScraper:
                 "solution": "No error message provided.",
                 "source": "N/A",
                 "confidence": "low",
-                "all_sources": []
+                "all_sources": [],
+                "ml_recommendation": None
             }
+
+        # Get ML-based fix prediction first
+        ml_recommendation = self._get_ml_recommendation(error_message, severity)
 
         # Build search query
         query = self._build_query(error_message)
@@ -116,11 +128,15 @@ class SolutionScraper:
                 "solution": "No specific solution found on the public web. Consider checking internal documentation or contacting support.",
                 "source": "N/A",
                 "confidence": "low",
-                "all_sources": []
+                "all_sources": [],
+                "ml_recommendation": ml_recommendation
             }
 
         # Aggregate and score results
-        return self._aggregate_results(results)
+        aggregated = self._aggregate_results(results)
+        aggregated["ml_recommendation"] = ml_recommendation
+
+        return aggregated
 
     def _build_query(self, error_message: str) -> str:
         """
@@ -293,23 +309,76 @@ class SolutionScraper:
 
         return unique_steps[:10]  # Limit to 10 steps
 
-    def batch_find_solutions(self, error_messages: List[str]) -> List[Dict[str, Any]]:
+    def _get_ml_recommendation(self, error_message: str, severity: str) -> Dict[str, Any]:
         """
-        Find solutions for multiple error messages.
+        Get ML-based fix recommendation using Random Forest classifier.
+
+        Args:
+            error_message: Error pattern
+            severity: Severity level
+
+        Returns:
+            Dictionary with ML fix prediction, confidence, and implementation steps
+        """
+        try:
+            # Clean the error message
+            cleaned = clean_log(error_message)
+
+            # Get prediction from ML engine
+            prediction = self.ml_engine.bug_fix_classifier.predict(cleaned, severity)
+
+            # Get implementation steps from ML engine
+            fix_action = prediction.get("recommended_fix", "ignore_transient")
+            from src.ml_engine import _FIX_STEPS
+            implementation_steps = _FIX_STEPS.get(fix_action, [])
+
+            logger.info(f"ML recommendation: {fix_action} (confidence: {prediction.get('confidence', 0):.2f})")
+
+            return {
+                "recommended_fix": fix_action,
+                "confidence": prediction.get("confidence", 0.0),
+                "alternatives": prediction.get("alternatives", []),
+                "implementation_steps": implementation_steps,
+                "source": prediction.get("source", "ml_model")
+            }
+
+        except Exception as e:
+            logger.error(f"Error getting ML recommendation: {e}")
+            return {
+                "recommended_fix": "escalate_to_oncall",
+                "confidence": 0.5,
+                "alternatives": [],
+                "implementation_steps": [],
+                "source": "fallback"
+            }
+
+    def batch_find_solutions(self, error_messages: List[str], severities: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+        """
+        Find solutions for multiple error messages with ML-based recommendations.
 
         Args:
             error_messages: List of error patterns
+            severities: Optional list of severity levels (defaults to "medium")
 
         Returns:
-            List of solution dictionaries
+            List of solution dictionaries with ML recommendations
         """
         logger.info(f"Batch searching for {len(error_messages)} errors")
 
+        # Default severity if not provided
+        if severities is None:
+            severities = ["medium"] * len(error_messages)
+
+        # Ensure equal lengths
+        if len(severities) != len(error_messages):
+            logger.warning(f"Severity list length mismatch, using default 'medium'")
+            severities = ["medium"] * len(error_messages)
+
         solutions = []
-        for i, error in enumerate(error_messages):
+        for i, (error, severity) in enumerate(zip(error_messages, severities)):
             logger.info(f"Processing error {i + 1}/{len(error_messages)}")
 
-            solution = self.find_solution(error)
+            solution = self.find_solution(error, severity)
             solutions.append(solution)
 
             # Rate limiting
@@ -317,3 +386,27 @@ class SolutionScraper:
                 time.sleep(1)  # Be respectful to search engines
 
         return solutions
+
+    def analyze_with_ml(self, error_messages: List[str], severities: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+        """
+        Perform ML-only analysis without web scraping.
+        Useful for fast, offline bug detection and fix recommendations.
+
+        Args:
+            error_messages: List of error patterns
+            severities: Optional list of severity levels
+
+        Returns:
+            List of ML-based recommendations
+        """
+        logger.info(f"Performing ML analysis on {len(error_messages)} errors")
+
+        if severities is None:
+            severities = ["medium"] * len(error_messages)
+
+        recommendations = []
+        for error, severity in zip(error_messages, severities):
+            ml_rec = self._get_ml_recommendation(error, severity)
+            recommendations.append(ml_rec)
+
+        return recommendations
