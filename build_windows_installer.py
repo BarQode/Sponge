@@ -1,7 +1,8 @@
 """
-Build Windows Installer
+Build Windows Installer - Production Ready
 
 Creates an MSI installer for Windows using cx_Freeze or PyInstaller + Inno Setup.
+Includes ML models (Random Forest, Linear Regression) and all dependencies.
 """
 
 import os
@@ -9,42 +10,108 @@ import sys
 import subprocess
 from pathlib import Path
 
-VERSION = "2.0.0"
+VERSION = "3.0.0"  # Updated for ML-enhanced version
 APP_NAME = "Sponge"
 COMPANY = "Sponge Project"
 
 
 def build_windows_exe():
-    """Build Windows executable using PyInstaller"""
-    print("Building Windows executable...")
+    """Build Windows executable using PyInstaller with ML dependencies"""
+    print("Building Windows executable with ML models (Random Forest + Linear Regression)...")
+
+    # Ensure models directory exists
+    Path("models").mkdir(exist_ok=True)
 
     pyinstaller_cmd = [
         'pyinstaller',
         '--name', APP_NAME,
         '--onefile',
         '--console',  # Use --windowed for GUI app
-        '--icon', 'assets/icons/icon.ico',
+        '--icon', 'assets/icons/icon.ico' if Path('assets/icons/icon.ico').exists() else '',
         '--add-data', 'src;src',
         '--add-data', 'data;data',
         '--add-data', 'models;models',
+
+        # Core ML hidden imports
+        '--hidden-import', 'sklearn.ensemble',
+        '--hidden-import', 'sklearn.ensemble._forest',
+        '--hidden-import', 'sklearn.ensemble._iforest',
+        '--hidden-import', 'sklearn.linear_model',
+        '--hidden-import', 'sklearn.linear_model._base',
+        '--hidden-import', 'sklearn.cluster',
+        '--hidden-import', 'sklearn.cluster._dbscan',
+        '--hidden-import', 'sklearn.feature_extraction.text',
+        '--hidden-import', 'sklearn.preprocessing',
+        '--hidden-import', 'sklearn.preprocessing._label',
+        '--hidden-import', 'sklearn.preprocessing._data',
+        '--hidden-import', 'sklearn.model_selection',
+        '--hidden-import', 'sklearn.metrics',
+
+        # sklearn internal dependencies
         '--hidden-import', 'sklearn.utils._cython_blas',
         '--hidden-import', 'sklearn.neighbors.typedefs',
         '--hidden-import', 'sklearn.neighbors.quad_tree',
+        '--hidden-import', 'sklearn.tree',
         '--hidden-import', 'sklearn.tree._utils',
+        '--hidden-import', 'sklearn.tree._tree',
+        '--hidden-import', 'sklearn.utils._typedefs',
+        '--hidden-import', 'sklearn.utils._heap',
+        '--hidden-import', 'sklearn.utils._sorting',
+        '--hidden-import', 'sklearn.utils._vector_sentinel',
+
+        # Model persistence
+        '--hidden-import', 'joblib',
+        '--hidden-import', 'joblib.externals.loky',
+
+        # Data handling
         '--hidden-import', 'pandas',
         '--hidden-import', 'numpy',
+        '--hidden-import', 'numpy.random',
         '--hidden-import', 'openpyxl',
+        '--hidden-import', 'openpyxl.cell',
+        '--hidden-import', 'openpyxl.styles',
+
+        # Web scraping
+        '--hidden-import', 'duckduckgo_search',
+        '--hidden-import', 'bs4',
+        '--hidden-import', 'lxml',
+
+        # Optional: TensorFlow (if used)
         '--collect-all', 'tensorflow',
-        '--collect-all', 'torch',
+
+        # Exclude large unnecessary packages
+        '--exclude-module', 'torch',  # PyTorch not needed
+        '--exclude-module', 'matplotlib',
+        '--exclude-module', 'IPython',
+        '--exclude-module', 'notebook',
+
         'main.py'
     ]
+
+    # Remove empty icon argument if icon doesn't exist
+    pyinstaller_cmd = [arg for arg in pyinstaller_cmd if arg]
 
     try:
         subprocess.run(pyinstaller_cmd, check=True)
         print("✓ Windows executable created successfully")
+        print(f"  Location: dist/{APP_NAME}.exe")
+
+        # Verify executable
+        exe_path = Path(f"dist/{APP_NAME}.exe")
+        if exe_path.exists():
+            size_mb = exe_path.stat().st_size / (1024 * 1024)
+            print(f"  Size: {size_mb:.1f} MB")
+
         return True
     except subprocess.CalledProcessError as e:
         print(f"✗ Failed to create executable: {e}")
+        print("\nTroubleshooting:")
+        print("  1. Ensure PyInstaller is installed: pip install pyinstaller")
+        print("  2. Check all dependencies are installed: pip install -r requirements.txt")
+        print("  3. Try running with --debug=all flag for more details")
+        return False
+    except FileNotFoundError:
+        print("✗ PyInstaller not found. Install it with: pip install pyinstaller")
         return False
 
 
@@ -201,20 +268,39 @@ setup(
 
 
 def main():
-    """Main build process"""
+    """Main build process for production-ready Windows installer"""
     print(f"Building {APP_NAME} v{VERSION} for Windows")
-    print("=" * 50)
+    print("ML-Enhanced: Random Forest + Linear Regression + DBSCAN + Isolation Forest")
+    print("=" * 70)
 
     # Check platform
     if sys.platform != 'win32':
         print("⚠ This script is optimized for Windows")
         print("You can still build the executable, but installer creation may fail")
+        response = input("\nContinue anyway? (y/N): ")
+        if response.lower() != 'y':
+            return 1
+
+    # Pre-flight checks
+    print("\n[1/4] Pre-flight checks...")
+    try:
+        import sklearn
+        import joblib
+        import numpy
+        import pandas
+        print("  ✓ All ML dependencies available")
+    except ImportError as e:
+        print(f"  ✗ Missing dependency: {e}")
+        print("  Install with: pip install -r requirements.txt")
+        return 1
 
     # Build executable
+    print("\n[2/4] Building executable...")
     if not build_windows_exe():
         return 1
 
     # Create installer using Inno Setup
+    print("\n[3/4] Creating installer...")
     script_path = create_inno_setup_script()
     inno_success = build_inno_installer(script_path)
 
@@ -226,17 +312,30 @@ def main():
         if msi_success:
             print(f"\n✓ Build completed successfully!")
             print(f"\nInstaller created: dist/{APP_NAME}-{VERSION}.msi")
+            print("\n📦 Distribution Package:")
+            print(f"  - Executable: dist/{APP_NAME}.exe")
+            print(f"  - Installer: dist/{APP_NAME}-{VERSION}.msi")
+            print("\n🚀 Ready for distribution!")
             return 0
 
     if inno_success:
-        print(f"\n✓ Build completed successfully!")
-        print(f"\nInstaller created: installers/{APP_NAME}-{VERSION}-setup.exe")
+        print(f"\n[4/4] Build completed successfully!")
+        print(f"\n✓ Installer created: installers/{APP_NAME}-{VERSION}-setup.exe")
+        print("\n📦 Distribution Package:")
+        print(f"  - Executable: dist/{APP_NAME}.exe")
+        print(f"  - Installer: installers/{APP_NAME}-{VERSION}-setup.exe")
+        print("\n🚀 Ready for distribution!")
+        print("\nTo distribute:")
+        print(f"  1. Share installers/{APP_NAME}-{VERSION}-setup.exe with users")
+        print("  2. Users run the installer to install on Windows")
+        print("  3. ML models will be bundled in the installation")
         return 0
 
     print("\n✗ Build failed")
     print("\nNote: You need either:")
     print("  - Inno Setup: https://jrsoftware.org/isdl.php")
     print("  - cx_Freeze: pip install cx-Freeze")
+    print("\nAlternatively, distribute dist/{APP_NAME}.exe directly (no installer)")
     return 1
 
 
