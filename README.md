@@ -7,7 +7,7 @@ Sponge is a comprehensive, open-source operational automation platform that comb
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![Cross-Platform](https://img.shields.io/badge/platform-Mac%20%7C%20Windows%20%7C%20Linux-lightgrey)](https://github.com/BarQode/Sponge)
-[![Tests](https://img.shields.io/badge/tests-48%20passing-brightgreen)](#testing)
+[![Tests](https://img.shields.io/badge/tests-43%20passing-brightgreen)](#testing)
 
 ---
 
@@ -18,6 +18,12 @@ Sponge is a comprehensive, open-source operational automation platform that comb
   - TF-IDF vectorization with 4000 features for semantic analysis
   - Confidence scores and top-3 alternatives for each recommendation
   - Rule-based fallback for untrained scenarios (100% uptime)
+- **K-Nearest Neighbor (KNN)** - Error and threat pattern detection **[NEW!]**
+  - TF-IDF vectorization with 2000 features for log similarity
+  - Configurable distance metrics (Euclidean, Manhattan, Cosine)
+  - Anomaly detection with confidence scoring
+  - Find similar errors in training data
+  - Model persistence for production deployment
 - **Linear Regression Predictor** - Error frequency forecasting
   - Equation: ŷ = β₀ + β₁·t + β₂·severity + β₃·frequency_indicator
   - Coefficient-based threshold alerts (critical=1.5x, high=2.0x, medium=3.0x)
@@ -49,6 +55,16 @@ Sponge is a comprehensive, open-source operational automation platform that comb
 - **4 Operation Modes** - CLI, Monitoring, SOAP API, Training
 - **Prometheus Integration** - Comprehensive metrics for all operations
 - **No Cloud Required** - Works offline with local databases
+
+### 🗄️ PostgreSQL Vector Database **[NEW!]**
+- **pgvector Extension** - Native vector similarity search in PostgreSQL
+- **ML Feature Storage** - Store TF-IDF vectors and embeddings for errors/threats
+- **Optimized Indexing** - IVFFlat and HNSW indexes for fast nearest-neighbor search
+- **Schema Design** - Production-ready tables for error_vectors, threat_vectors, training_data
+- **Connection Pooling** - Thread-safe connection pool (2-10 connections)
+- **Batch Operations** - Efficient bulk inserts for training data
+- **Vector Queries** - Find similar errors using L2/Cosine distance metrics
+- **Performance** - Sub-second similarity searches across millions of vectors
 
 ---
 

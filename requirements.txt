@@ -84,6 +84,37 @@ lumigo-tracer>=1.1.0
 # GoAccess (Web Log Analyzer)
 # Requires goaccess binary installed on system
 
+# Logentries (Rapid7 InsightOps) - uses standard requests
+
+# VelocityAP (APM) - uses standard requests
+
+# Biometrics Ltd DataLOG - uses standard requests
+
+# Data Log Viewer - uses standard requests
+
+# ============================================
+# POSTGRESQL VECTOR DATABASE SUPPORT
+# ============================================
+
+# PostgreSQL adapter with connection pooling
+psycopg2-binary>=2.9.9
+
+# pgvector extension for vector similarity search
+# Note: Install pgvector extension in PostgreSQL:
+# CREATE EXTENSION vector;
+
+# ============================================
+# MACHINE LEARNING ENHANCEMENTS
+# ============================================
+
+# Already included above:
+# - numpy>=1.24.0,<2.0.0
+# - scikit-learn>=1.3.0
+# - pandas>=2.0.0
+
+# Additional ML dependencies for KNN and vector operations
+# (Already satisfied by above requirements)
+
 # ============================================
 # OPTIONAL: Performance Profiling & Testing
 # ============================================

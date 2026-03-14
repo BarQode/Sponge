@@ -1,15 +1,16 @@
 """
 Integration modules for monitoring platforms.
 
-Comprehensive support for 20+ log and monitoring platforms including:
+Comprehensive support for 24+ log and monitoring platforms including:
 - Cloud: AWS CloudWatch, Azure Monitor, GCP
-- APM: DataDog, Dynatrace, New Relic
+- APM: DataDog, Dynatrace, New Relic, VelocityAP
 - SIEM: Splunk, SolarWinds LEM
 - Logs: ELK Stack, Grafana/Loki, Fluentd, Logstash
-- SaaS: Sumo Logic, Loggly, Papertrail, Retrace
+- SaaS: Sumo Logic, Loggly, Papertrail, Retrace, Logentries
 - Metrics: Prometheus, Grafana
 - Security: Sentry, Huntress, Coralogix
 - Web Analytics: GoAccess
+- Specialized: Biometrics DataLOG, Data Log Viewer
 """
 
 from src.integrations.base import BaseIntegration, LogEntry, PerformanceMetric
@@ -51,6 +52,12 @@ from src.integrations.retrace import RetraceIntegration
 
 # Web Analytics
 from src.integrations.goaccess import GoAccessIntegration
+
+# Additional Platform Integrations
+from src.integrations.logentries import LogentriesIntegration
+from src.integrations.velocityap import VelocityAPIntegration
+from src.integrations.datalog import DataLOGIntegration
+from src.integrations.datalogviewer import DataLogViewerIntegration
 
 __all__ = [
     # Base Classes
@@ -95,6 +102,12 @@ __all__ = [
 
     # Web Analytics
     'GoAccessIntegration',
+
+    # Additional Platforms
+    'LogentriesIntegration',
+    'VelocityAPIntegration',
+    'DataLOGIntegration',
+    'DataLogViewerIntegration',
 ]
 
 
@@ -124,6 +137,11 @@ AVAILABLE_PLATFORMS = {
     'retrace': RetraceIntegration,
     'stackify': RetraceIntegration,  # Retrace is Stackify's product
     'goaccess': GoAccessIntegration,
+    'logentries': LogentriesIntegration,
+    'velocityap': VelocityAPIntegration,
+    'datalog': DataLOGIntegration,
+    'biometrics': DataLOGIntegration,  # Biometrics Ltd DataLOG
+    'datalogviewer': DataLogViewerIntegration,
 }
 
 

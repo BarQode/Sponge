@@ -529,3 +529,233 @@ class TestErrorHandling(unittest.TestCase):
 if __name__ == '__main__':
     # Run tests with verbose output
     unittest.main(verbosity=2)
+
+
+# Tests for new platform integrations
+
+class TestLogentriesIntegration(unittest.TestCase):
+    """Test Logentries integration."""
+
+    def setUp(self):
+        """Set up test fixtures."""
+        from src.integrations.logentries import LogentriesIntegration
+        
+        config = {
+            'api_key': 'test_key',
+            'region': 'us'
+        }
+        self.integration = LogentriesIntegration(config)
+
+    @patch('src.integrations.logentries.requests.Session.get')
+    def test_connection(self, mock_get):
+        """Test Logentries connection."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_get.return_value = mock_response
+
+        result = self.integration.test_connection()
+        self.assertTrue(result)
+
+    @patch('src.integrations.logentries.requests.Session.post')
+    def test_fetch_logs(self, mock_post):
+        """Test fetching logs from Logentries."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            'events': [
+                {
+                    'timestamp': 1234567890000,
+                    'message': 'Test log message',
+                    'log_id': 'test_log'
+                }
+            ]
+        }
+        mock_post.return_value = mock_response
+
+        start = datetime.utcnow() - timedelta(hours=1)
+        end = datetime.utcnow()
+        logs = self.integration.fetch_logs(start, end)
+
+        self.assertIsInstance(logs, list)
+
+
+class TestVelocityAPIntegration(unittest.TestCase):
+    """Test VelocityAP integration."""
+
+    def setUp(self):
+        """Set up test fixtures."""
+        from src.integrations.velocityap import VelocityAPIntegration
+        
+        config = {
+            'api_url': 'http://localhost:8080',
+            'api_key': 'test_key',
+            'app_id': 'test_app'
+        }
+        self.integration = VelocityAPIntegration(config)
+
+    @patch('src.integrations.velocityap.requests.Session.get')
+    def test_connection(self, mock_get):
+        """Test VelocityAP connection."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_get.return_value = mock_response
+
+        result = self.integration.test_connection()
+        self.assertTrue(result)
+
+    @patch('src.integrations.velocityap.requests.Session.get')
+    def test_fetch_performance_metrics(self, mock_get):
+        """Test fetching performance metrics."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            'series': [
+                {
+                    'name': 'response_time',
+                    'points': [
+                        [1234567890000, 150.5]
+                    ]
+                }
+            ]
+        }
+        mock_get.return_value = mock_response
+
+        start = datetime.utcnow() - timedelta(hours=1)
+        end = datetime.utcnow()
+        metrics = self.integration.fetch_performance_metrics(start, end)
+
+        self.assertIsInstance(metrics, list)
+
+
+class TestDataLOGIntegration(unittest.TestCase):
+    """Test Biometrics DataLOG integration."""
+
+    def setUp(self):
+        """Set up test fixtures."""
+        from src.integrations.datalog import DataLOGIntegration
+        
+        config = {
+            'api_url': 'http://localhost:8080',
+            'api_key': 'test_key',
+            'device_id': 'device_001'
+        }
+        self.integration = DataLOGIntegration(config)
+
+    @patch('src.integrations.datalog.requests.Session.get')
+    def test_connection(self, mock_get):
+        """Test DataLOG connection."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_get.return_value = mock_response
+
+        result = self.integration.test_connection()
+        self.assertTrue(result)
+
+    @patch('src.integrations.datalog.requests.Session.get')
+    def test_get_sensor_data(self, mock_get):
+        """Test retrieving sensor data."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            'readings': [
+                {
+                    'sensor_id': 'temp_01',
+                    'value': 25.5,
+                    'timestamp': '2024-01-01T00:00:00Z'
+                }
+            ]
+        }
+        mock_get.return_value = mock_response
+
+        start = datetime.utcnow() - timedelta(hours=1)
+        end = datetime.utcnow()
+        readings = self.integration.get_sensor_data(start, end)
+
+        self.assertIsInstance(readings, list)
+
+
+class TestDataLogViewerIntegration(unittest.TestCase):
+    """Test Data Log Viewer integration."""
+
+    def setUp(self):
+        """Set up test fixtures."""
+        from src.integrations.datalogviewer import DataLogViewerIntegration
+        
+        # Test with API mode
+        config = {
+            'api_url': 'http://localhost:8080',
+            'api_key': 'test_key',
+            'log_format': 'json'
+        }
+        self.integration = DataLogViewerIntegration(config)
+
+    @patch('src.integrations.datalogviewer.requests.Session.get')
+    def test_connection_api_mode(self, mock_get):
+        """Test connection in API mode."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_get.return_value = mock_response
+
+        result = self.integration.test_connection()
+        self.assertTrue(result)
+
+    @patch('src.integrations.datalogviewer.requests.Session.get')
+    def test_fetch_logs_api_mode(self, mock_get):
+        """Test fetching logs via API."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            'logs': [
+                {
+                    'timestamp': '2024-01-01T00:00:00Z',
+                    'level': 'ERROR',
+                    'message': 'Test error'
+                }
+            ]
+        }
+        mock_get.return_value = mock_response
+
+        start = datetime.utcnow() - timedelta(hours=1)
+        end = datetime.utcnow()
+        logs = self.integration.fetch_logs(start, end)
+
+        self.assertIsInstance(logs, list)
+
+
+class TestNewIntegrationFactory(unittest.TestCase):
+    """Test integration factory with new platforms."""
+
+    def test_get_logentries_integration(self):
+        """Test getting Logentries integration."""
+        config = {'api_key': 'test'}
+        integration = get_integration('logentries', config)
+        self.assertIsNotNone(integration)
+
+    def test_get_velocityap_integration(self):
+        """Test getting VelocityAP integration."""
+        config = {'api_url': 'http://localhost', 'api_key': 'test'}
+        integration = get_integration('velocityap', config)
+        self.assertIsNotNone(integration)
+
+    def test_get_datalog_integration(self):
+        """Test getting DataLOG integration."""
+        config = {'api_url': 'http://localhost', 'api_key': 'test'}
+        integration = get_integration('datalog', config)
+        self.assertIsNotNone(integration)
+
+    def test_get_datalogviewer_integration(self):
+        """Test getting Data Log Viewer integration."""
+        config = {'api_url': 'http://localhost'}
+        integration = get_integration('datalogviewer', config)
+        self.assertIsNotNone(integration)
+
+    def test_list_platforms_includes_new(self):
+        """Test that new platforms are listed."""
+        platforms = list_available_platforms()
+        
+        self.assertIn('logentries', platforms)
+        self.assertIn('velocityap', platforms)
+        self.assertIn('datalog', platforms)
+        self.assertIn('datalogviewer', platforms)
+
+
