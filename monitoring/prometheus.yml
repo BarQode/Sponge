@@ -1,0 +1,53 @@
+# Prometheus Configuration for Sponge RCA Platform
+# ================================================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'sponge-rca'
+    environment: 'production'
+
+# Alertmanager configuration (optional)
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+          # - alertmanager:9093
+
+# Load rules once and periodically evaluate them
+rule_files:
+  # - "rules/*.yml"
+
+# Scrape configurations
+scrape_configs:
+  # Sponge RCA Application Metrics
+  - job_name: 'sponge'
+    static_configs:
+      - targets: ['sponge:9090']
+        labels:
+          service: 'sponge-rca'
+
+  # PostgreSQL Metrics (requires postgres_exporter)
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres_exporter:9187']
+        labels:
+          service: 'postgresql'
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Node Exporter (system metrics - optional)
+  - job_name: 'node'
+    static_configs:
+      - targets: []
+        # - node_exporter:9100
+
+  # Redis Metrics (optional)
+  - job_name: 'redis'
+    static_configs:
+      - targets: []
+        # - redis_exporter:9121
