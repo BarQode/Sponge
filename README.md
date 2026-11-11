@@ -1,13 +1,79 @@
-# 🧽 Sponge - AI-Powered RCA with SRE & Security Automation
+# Sponge — MCP Agent Framework for Kubernetes Incident Response
 
-**Complete Root Cause Analysis Platform with Google SRE Toil Reduction & Enterprise Security Automation**
+**Autonomous Model Context Protocol agents that detect, analyse, and remediate incidents in Kubernetes clusters and cloud workloads**
 
-Sponge is a comprehensive, open-source operational automation platform that combines ML-powered log analysis with SRE automation (toil reduction, self-healing, SLO management) and enterprise security orchestration (JIT access, SOAR, compliance scanning).
+Sponge is an open-source **MCP (Model Context Protocol) agent framework** that deploys autonomous agents into any Kubernetes cluster. Each agent monitors a specific incident class, infers the root cause, dispatches remediations via MCP, and records every solution in a shared knowledge base — so the system gets smarter with every incident.
+
+> **Legacy features** (ML engine, SRE automation, SOAP, Windows installer) are preserved in `main_old.py` and their existing modules. New deployments should follow the MCP agent path described below.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![Cross-Platform](https://img.shields.io/badge/platform-Mac%20%7C%20Windows%20%7C%20Linux-lightgrey)](https://github.com/BarQode/Sponge)
 [![Tests](https://img.shields.io/badge/tests-43%20passing-brightgreen)](#testing)
+
+---
+
+## MCP Agent Framework (v4.0)
+
+### Agents
+
+| Agent | Incident Type | Auto-Remediation |
+|---|---|---|
+| `oom_agent.py` | Out-of-memory kills | Increase limits · Scale replicas · Restart |
+| `dependency_agent.py` | CVE / vulnerable images | Block deploys · Patch dependency · SBOM |
+| `security_agent.py` | RBAC · Secrets · Policies | Fix RBAC · Rotate secrets · Apply network policy |
+| `terraform_agent.py` | Infrastructure drift | `terraform apply` · Lock resources |
+| `codebase_agent.py` | App crashes / loops | Rollback deployment · Apply hotfix |
+| `log_analysis_agent.py` | **Multi-platform log errors** | **Full analysis → MCP dispatch → KB record** |
+| `remediation_orchestrator.py` | **All incident types** | Receives incidents · Deploys solutions · Escalates |
+
+### Log Analysis Agent — Observability Platform Support
+
+The **Log Analysis Agent** ingests errors and metrics from all major platforms:
+
+| Platform | Key |
+|---|---|
+| Dynatrace | `dynatrace` |
+| AWS CloudWatch | `cloudwatch` |
+| Datadog | `datadog` |
+| Splunk | `splunk` |
+| Grafana | `grafana` |
+| Elasticsearch / OpenSearch | `elastic` |
+| Sumo Logic | `sumologic` |
+| Sentry | `sentry` |
+| Prometheus | `prometheus` |
+| Logstash | `logstash` |
+| Papertrail | `papertrail` |
+| Loggly | `loggly` |
+
+For each platform it:
+1. Fetches errors and performance metrics over a configurable time window
+2. Groups log lines into error fingerprints (UUID/IP/number normalised)
+3. Classifies each fingerprint into an MCP incident type (OOM, CVE, RBAC, drift, crash…)
+4. Cross-correlates log errors with metric spikes across platforms
+5. Dispatches remediations via the MCP Remediation Orchestrator
+6. Stores every resolved incident in the knowledge base
+
+### Quick Install (Kubernetes)
+
+```bash
+# 1. Add Helm repository
+helm repo add sponge https://barqode.github.io/sponge
+helm repo update
+
+# 2. Install with default configuration (all agents enabled)
+helm install sponge sponge/sponge-mcp \
+  --namespace sponge-system \
+  --create-namespace \
+  --set agents.logAnalysis.enabled=true \
+  --set agents.logAnalysis.platforms.dynatrace.apiToken="$DT_TOKEN" \
+  --set agents.logAnalysis.platforms.dynatrace.environmentUrl="$DT_ENV_URL"
+
+# 3. Verify
+kubectl get pods -n sponge-system
+```
+
+See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for full configuration reference.
 
 ---
 
